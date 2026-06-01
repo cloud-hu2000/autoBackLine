@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Browser data
+browser/data/
+*.crx
+*. Cookies
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Data (runtime outputs)
+data/downloads/
+data/output/
+data/*.csv
+data/~$*.xlsx
+*.tmp
+*.bak
+*.db
+*.sqlite
+*.sqlite3
+!data/domain_blacklist.csv
+!data/url_blacklist.csv

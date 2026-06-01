@@ -1,0 +1,17 @@
+# 完整流程（登录 -> 抓取 -> 搜索）
+python main.py
+
+# 仅登录
+python main.py --mode login
+
+# 仅抓取
+python main.py --mode scrape
+
+# 仅搜索
+python main.py --mode search
+
+# 循环执行
+python main.py --loop --max-loops 3
+
+# 无头模式
+python main.py --headless
