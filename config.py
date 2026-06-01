@@ -1,8 +1,15 @@
 import os
+import sys
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+DEFAULT_CHROME_PATH = (
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    if sys.platform == "darwin"
+    else r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+)
 
 """
 配置文件
@@ -105,7 +112,7 @@ BROWSER_CONFIG = {
     "viewport": {"width": 1920, "height": 1080},
     "disable_images": True,  # 禁用图片加载，提升速度
     "use_existing_chrome": True,  # 是否使用已有的Chrome浏览器
-    "chrome_path": r"C:\Program Files\Google\Chrome\Application\chrome.exe",  # Chrome浏览器路径，留空则自动查找
+    "chrome_path": os.getenv("CHROME_PATH", DEFAULT_CHROME_PATH),  # Chrome浏览器路径，留空则自动查找
     "chrome_remote_debugging_port": 9222,  # 远程调试端口（使用已有Chrome时需要）
 }
 
