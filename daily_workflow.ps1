@@ -6,14 +6,17 @@ param(
   [string]$PluginUrl = '',
   [string]$PluginOptionsUrl = '',
   [int]$ScrapeTimeoutMinutes = 240,
-  [int]$PluginCompletionTimeoutMinutes = 240,
+  [int]$PluginCompletionTimeoutMinutes = 0,
   [switch]$SkipScrape,
   [switch]$SkipPlugin,
   [switch]$NoStartPluginTask,
   [switch]$NoExportPluginResult,
   [switch]$RequireInputToday,
+  [switch]$SkipBlogAnalysis,
   [string]$CsvPath = '',
   [string]$PluginOutputDir = '',
+  [string]$BlogAnalysisInputDir = '',
+  [int]$BlogAnalysisMaxPages = 0,
   [string[]]$PluginStartSelector = @()
 )
 
@@ -212,6 +215,13 @@ try {
   }
   $null = New-Item -ItemType Directory -Force -Path $PluginOutputDir
 
+  if ([string]::IsNullOrWhiteSpace($BlogAnalysisInputDir)) {
+    $BlogAnalysisInputDir = Join-Path $ProjectRoot 'data\input'
+  } elseif (-not [System.IO.Path]::IsPathRooted($BlogAnalysisInputDir)) {
+    $BlogAnalysisInputDir = Join-Path $ProjectRoot $BlogAnalysisInputDir
+  }
+  $null = New-Item -ItemType Directory -Force -Path $BlogAnalysisInputDir
+
   if (-not $SkipPlugin) {
     if (-not (Wait-DebugPort -Port $DebugPort -TimeoutSeconds 30)) {
       Write-Step "Chrome debug port is not ready after merge; starting Chrome again"
@@ -231,10 +241,22 @@ try {
       '--completion-timeout-minutes', "$PluginCompletionTimeoutMinutes"
     )
 
+    if (-not $SkipBlogAnalysis -and -not $NoStartPluginTask) {
+      $pluginArgs += @(
+        '--analyze-opened-blogs',
+        '--blog-analysis-input-dir', $BlogAnalysisInputDir,
+        '--blog-analysis-input-xlsx', $inputFile
+      )
+    }
+
     foreach ($selector in $PluginStartSelector) {
       if (-not [string]::IsNullOrWhiteSpace($selector)) {
         $pluginArgs += @('--start-selector', $selector)
       }
+    }
+
+    if ($BlogAnalysisMaxPages -gt 0) {
+      $pluginArgs += @('--blog-analysis-max-pages', "$BlogAnalysisMaxPages")
     }
 
     if ($NoStartPluginTask) {

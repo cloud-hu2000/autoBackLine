@@ -39,6 +39,7 @@ logs/
 
 # Data (runtime outputs)
 data/downloads/
+data/input/
 data/output/
 data/*.csv
 data/~$*.xlsx

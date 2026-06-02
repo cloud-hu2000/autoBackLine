@@ -14,14 +14,19 @@ PLUGIN_EXTENSION_ID="${PLUGIN_EXTENSION_ID:-eckpehelplpholpddkpmihfigodplkdp}"
 PLUGIN_URL="${PLUGIN_URL:-chrome-extension://$PLUGIN_EXTENSION_ID/batch.html}"
 PLUGIN_OPTIONS_URL="${PLUGIN_OPTIONS_URL:-chrome-extension://$PLUGIN_EXTENSION_ID/options.html}"
 SCRAPE_TIMEOUT_MINUTES=240
-PLUGIN_COMPLETION_TIMEOUT_MINUTES=240
+PLUGIN_COMPLETION_TIMEOUT_MINUTES=0
 SKIP_SCRAPE=0
 SKIP_PLUGIN=0
 NO_START_PLUGIN_TASK=0
 NO_EXPORT_PLUGIN_RESULT=0
 REQUIRE_INPUT_TODAY=0
+SKIP_BLOG_ANALYSIS=0
 CSV_PATH=""
 PLUGIN_OUTPUT_DIR=""
+BLOG_ANALYSIS_INPUT_DIR=""
+BLOG_ANALYSIS_DOWNLOAD_TIMEOUT_MS=60000
+BLOG_ANALYSIS_MAX_PAGES=0
+BLOG_ANALYSIS_BUTTON_SELECTORS=()
 PLUGIN_START_SELECTORS=()
 PYTHON_BIN="${PYTHON:-python3}"
 export PYTHONUNBUFFERED=1
@@ -37,15 +42,19 @@ Options:
   --plugin-url URL
   --plugin-options-url URL
   --scrape-timeout-minutes MINUTES
-  --plugin-completion-timeout-minutes MINUTES
+  --plugin-completion-timeout-minutes MINUTES  0 means wait indefinitely.
   --skip-scrape
   --skip-plugin
   --no-start-plugin-task
   --no-export-plugin-result
   --require-input-today
+  --skip-blog-analysis
   --csv-path PATH
   --plugin-output-dir PATH
   --plugin-start-selector SELECTOR   May be repeated.
+  --blog-analysis-input-dir PATH
+  --blog-analysis-button-selector SELECTOR   May be repeated.
+  --blog-analysis-max-pages N
   -h, --help
 USAGE
 }
@@ -64,9 +73,13 @@ while [[ $# -gt 0 ]]; do
     --no-start-plugin-task) NO_START_PLUGIN_TASK=1; shift ;;
     --no-export-plugin-result) NO_EXPORT_PLUGIN_RESULT=1; shift ;;
     --require-input-today) REQUIRE_INPUT_TODAY=1; shift ;;
+    --skip-blog-analysis) SKIP_BLOG_ANALYSIS=1; shift ;;
     --csv-path) CSV_PATH="$2"; shift 2 ;;
     --plugin-output-dir) PLUGIN_OUTPUT_DIR="$2"; shift 2 ;;
     --plugin-start-selector) PLUGIN_START_SELECTORS+=("$2"); shift 2 ;;
+    --blog-analysis-input-dir) BLOG_ANALYSIS_INPUT_DIR="$2"; shift 2 ;;
+    --blog-analysis-button-selector) BLOG_ANALYSIS_BUTTON_SELECTORS+=("$2"); shift 2 ;;
+    --blog-analysis-max-pages) BLOG_ANALYSIS_MAX_PAGES="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -239,6 +252,13 @@ elif [[ "$PLUGIN_OUTPUT_DIR" != /* ]]; then
 fi
 mkdir -p "$PLUGIN_OUTPUT_DIR"
 
+if [[ -z "$BLOG_ANALYSIS_INPUT_DIR" ]]; then
+  BLOG_ANALYSIS_INPUT_DIR="$PROJECT_ROOT/data/input"
+elif [[ "$BLOG_ANALYSIS_INPUT_DIR" != /* ]]; then
+  BLOG_ANALYSIS_INPUT_DIR="$PROJECT_ROOT/$BLOG_ANALYSIS_INPUT_DIR"
+fi
+mkdir -p "$BLOG_ANALYSIS_INPUT_DIR"
+
 if (( ! SKIP_PLUGIN )); then
   if ! wait_debug_port "$DEBUG_PORT" 30; then
     write_step "Chrome debug port is not ready after merge; starting Chrome again"
@@ -259,11 +279,30 @@ if (( ! SKIP_PLUGIN )); then
     --completion-timeout-minutes "$PLUGIN_COMPLETION_TIMEOUT_MINUTES"
   )
 
+  if (( ! SKIP_BLOG_ANALYSIS && ! NO_START_PLUGIN_TASK )); then
+    plugin_args+=(
+      --analyze-opened-blogs
+      --blog-analysis-input-dir "$BLOG_ANALYSIS_INPUT_DIR"
+      --blog-analysis-input-xlsx "$input_file"
+      --blog-analysis-download-timeout-ms "$BLOG_ANALYSIS_DOWNLOAD_TIMEOUT_MS"
+    )
+  fi
+
   set +u
   for selector in "${PLUGIN_START_SELECTORS[@]}"; do
     [[ -n "$selector" ]] && plugin_args+=(--start-selector "$selector")
   done
   set -u
+
+  set +u
+  for selector in "${BLOG_ANALYSIS_BUTTON_SELECTORS[@]}"; do
+    [[ -n "$selector" ]] && plugin_args+=(--blog-analysis-button-selector "$selector")
+  done
+  set -u
+
+  if (( BLOG_ANALYSIS_MAX_PAGES > 0 )); then
+    plugin_args+=(--blog-analysis-max-pages "$BLOG_ANALYSIS_MAX_PAGES")
+  fi
 
   (( NO_START_PLUGIN_TASK )) && plugin_args+=(--no-start)
   (( NO_EXPORT_PLUGIN_RESULT )) && plugin_args+=(--no-export)
