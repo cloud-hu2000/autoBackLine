@@ -4,8 +4,15 @@ set -euo pipefail
 DATE="$(date +%F)"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEBUG_PORT=9222
-PLUGIN_URL="chrome-extension://jhbjiamgmbmidfbdhflajegdkejianfl/batch.html"
-PLUGIN_OPTIONS_URL="chrome-extension://jhbjiamgmbmidfbdhflajegdkejianfl/options.html"
+if [[ -f "$PROJECT_ROOT/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$PROJECT_ROOT/.env"
+  set +a
+fi
+PLUGIN_EXTENSION_ID="${PLUGIN_EXTENSION_ID:-eckpehelplpholpddkpmihfigodplkdp}"
+PLUGIN_URL="${PLUGIN_URL:-chrome-extension://$PLUGIN_EXTENSION_ID/batch.html}"
+PLUGIN_OPTIONS_URL="${PLUGIN_OPTIONS_URL:-chrome-extension://$PLUGIN_EXTENSION_ID/options.html}"
 SCRAPE_TIMEOUT_MINUTES=240
 PLUGIN_COMPLETION_TIMEOUT_MINUTES=240
 SKIP_SCRAPE=0
@@ -17,6 +24,7 @@ CSV_PATH=""
 PLUGIN_OUTPUT_DIR=""
 PLUGIN_START_SELECTORS=()
 PYTHON_BIN="${PYTHON:-python3}"
+export PYTHONUNBUFFERED=1
 
 usage() {
   cat <<'USAGE'
@@ -251,9 +259,11 @@ if (( ! SKIP_PLUGIN )); then
     --completion-timeout-minutes "$PLUGIN_COMPLETION_TIMEOUT_MINUTES"
   )
 
+  set +u
   for selector in "${PLUGIN_START_SELECTORS[@]}"; do
     [[ -n "$selector" ]] && plugin_args+=(--start-selector "$selector")
   done
+  set -u
 
   (( NO_START_PLUGIN_TASK )) && plugin_args+=(--no-start)
   (( NO_EXPORT_PLUGIN_RESULT )) && plugin_args+=(--no-export)

@@ -2,8 +2,9 @@ param(
   [string]$Date = (Get-Date -Format 'yyyy-MM-dd'),
   [string]$ProjectRoot = $PSScriptRoot,
   [int]$DebugPort = 9222,
-  [string]$PluginUrl = 'chrome-extension://jhbjiamgmbmidfbdhflajegdkejianfl/batch.html',
-  [string]$PluginOptionsUrl = 'chrome-extension://jhbjiamgmbmidfbdhflajegdkejianfl/options.html',
+  [string]$PluginExtensionId = 'eckpehelplpholpddkpmihfigodplkdp',
+  [string]$PluginUrl = '',
+  [string]$PluginOptionsUrl = '',
   [int]$ScrapeTimeoutMinutes = 240,
   [int]$PluginCompletionTimeoutMinutes = 240,
   [switch]$SkipScrape,
@@ -17,6 +18,13 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+if (-not $PluginUrl) {
+  $PluginUrl = "chrome-extension://$PluginExtensionId/batch.html"
+}
+if (-not $PluginOptionsUrl) {
+  $PluginOptionsUrl = "chrome-extension://$PluginExtensionId/options.html"
+}
 
 function Write-Step {
   param([string]$Message)

@@ -10,10 +10,20 @@ from urllib.parse import quote
 
 import requests
 import websocket
+from dotenv import load_dotenv
 
 
-DEFAULT_OPTIONS_URL = "chrome-extension://jhbjiamgmbmidfbdhflajegdkejianfl/options.html"
-DEFAULT_BATCH_URL = "chrome-extension://jhbjiamgmbmidfbdhflajegdkejianfl/batch.html"
+load_dotenv()
+
+DEFAULT_EXTENSION_ID = os.getenv("PLUGIN_EXTENSION_ID", "eckpehelplpholpddkpmihfigodplkdp")
+DEFAULT_OPTIONS_URL = os.getenv(
+    "PLUGIN_OPTIONS_URL",
+    f"chrome-extension://{DEFAULT_EXTENSION_ID}/options.html",
+)
+DEFAULT_BATCH_URL = os.getenv(
+    "PLUGIN_URL",
+    f"chrome-extension://{DEFAULT_EXTENSION_ID}/batch.html",
+)
 
 for stream in (sys.stdout, sys.stderr):
     if hasattr(stream, "reconfigure"):

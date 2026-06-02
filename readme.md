@@ -42,7 +42,13 @@ The workflow writes logs to `logs\daily_workflow_YYYY-MM-DD.log`.
 The Chrome extension upload step opens:
 
 ```text
-chrome-extension://jhbjiamgmbmidfbdhflajegdkejianfl/batch.html
+chrome-extension://<PLUGIN_EXTENSION_ID>/batch.html
+```
+
+On macOS or a new machine, set the local extension id in `.env`:
+
+```env
+PLUGIN_EXTENSION_ID=eckpehelplpholpddkpmihfigodplkdp
 ```
 
 If the extension page uses a custom start button, pass a selector:
